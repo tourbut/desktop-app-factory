@@ -1,0 +1,40 @@
+{
+  "name": "desktop-app-factory",
+  "owner": { "name": "tourbut" },
+  "description": "HTML 페이지를 데스크톱 앱으로 만드는 플러그인과 그 디자인 의존성",
+  "plugins": [
+    {
+      "name": "desktop-app-factory",
+      "source": "./",
+      "description": "HTML 페이지를 Tauri 데스크톱 앱으로 빌드하고, 필요한 빌드 환경을 자동으로 갖춘다."
+    },
+    {
+      "name": "frontend-design",
+      "description": "Anthropic 공식. 템플릿 티 나지 않는 미적 방향·타이포그래피 결정.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/frontend-design",
+        "ref": "main"
+      },
+      "category": "design"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "description": "스타일·팔레트·폰트 조합·UX 가이드라인 검색 DB (nextlevelbuilder, MIT).",
+      "source": { "source": "github", "repo": "nextlevelbuilder/ui-ux-pro-max-skill" },
+      "category": "design"
+    },
+    {
+      "name": "impeccable",
+      "description": "디자인 critique/audit/polish 명령과 안티패턴 검출 (pbakaus, Apache-2.0).",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/pbakaus/impeccable.git",
+        "path": "plugin",
+        "ref": "main"
+      },
+      "category": "design"
+    }
+  ]
+}

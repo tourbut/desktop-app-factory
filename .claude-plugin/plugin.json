@@ -1,0 +1,10 @@
+{
+  "name": "desktop-app-factory",
+  "version": "0.2.0",
+  "description": "간단한 HTML 페이지를 Tauri 데스크톱 앱(.exe/.msi/.dmg/.deb 등)으로 만든다. 빌드 환경(Rust, C++ 빌드 도구, WebView2, Node.js)이 없는 PC에서는 먼저 환경을 갖춘다. 디자인 스킬과 Tauri 화면 검수 MCP를 함께 쓴다.",
+  "author": { "name": "tourbut" },
+  "repository": "https://github.com/tourbut/desktop-app-factory",
+  "license": "MIT",
+  "keywords": ["tauri", "desktop", "html", "packaging", "design"],
+  "dependencies": ["frontend-design", "ui-ux-pro-max", "impeccable"]
+}
