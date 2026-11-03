@@ -1,12 +1,11 @@
 ﻿# HTML 폴더를 Wails v2 프로젝트로 감싼다 (Windows).
-# 사용: powershell -ExecutionPolicy Bypass -File scaffold.ps1 -Src <html폴더> -Out <프로젝트폴더> -Name <앱이름> [-Slug <영문이름>] [-Title <창제목>] [-Width 1024] [-Height 768]
+# 사용: powershell -ExecutionPolicy Bypass -File scaffold.ps1 -Src <html폴더> -Out <프로젝트폴더> -Name <앱이름> [-Slug <exe이름>] [-Title <창제목>] [-Width 1024] [-Height 768]
 param(
   [Parameter(Mandatory)][string]$Src,
   [Parameter(Mandatory)][string]$Out,
   [Parameter(Mandatory)][string]$Name,
   [string]$Title = $Name,
-  [string]$Slug, # 영문 exe/폴더 이름 (예: memo). 없으면 -Name 에서 만든다
-
+  [string]$Slug, # exe·데이터 폴더 이름 (예: memo, 메모장). 없으면 -Name 을 쓴다
   [int]$Width = 1024,
   [int]$Height = 768
 )
@@ -21,9 +20,10 @@ if (-not (Test-Path $index)) { throw "$index 이 없다. 첫 화면 파일을 in
 if ([IO.File]::ReadAllText($index) -notmatch '<meta[^>]+charset') { Write-Warning 'index.html 에 <meta charset="utf-8"> 이 없다. 한글이 깨질 수 있으니 <head> 에 추가하라.' }
 if (Test-Path (Join-Path $Out 'wails.json')) { throw "$Out\wails.json 이 이미 있다. 덮어쓰지 않는다." }
 
-# exe 파일 이름·Go 모듈 이름·데이터 폴더 이름. 한글 등 비ASCII 이름은 비므로 시각 기반 이름을 쓴다.
-$slug = ($(if ($Slug) { $Slug } else { $Name }).ToLower() -replace '[^a-z0-9]+', '-').Trim('-')
-if (-not $slug) { $slug = 'app-' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() }
+# exe 파일 이름·데이터 폴더(%APPDATA%\<slug>) 이름. 한글 허용, Windows 파일 이름에 못 쓰는 문자만 뺀다.
+$slug = ($(if ($Slug) { $Slug } else { $Name }) -replace '[\\/:*?"<>|\x00-\x1f]', '').Trim().TrimEnd('.')
+if (-not $slug) { $slug = 'app' }
+if ($slug -match '^(con|prn|aux|nul|com\d|lpt\d)$') { $slug += '-app' } # Windows 예약 이름
 
 New-Item -ItemType Directory -Force (Join-Path $Out 'web') | Out-Null
 if ($Src -ne (Join-Path $Out 'web')) { Copy-Item -Recurse -Force (Join-Path $Src '*') (Join-Path $Out 'web') }

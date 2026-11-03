@@ -1,4 +1,4 @@
-module {{SLUG}}
+module desktopapp
 
 go 1.26.0
 
