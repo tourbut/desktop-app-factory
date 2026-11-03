@@ -1,17 +1,20 @@
 ---
 name: html-to-desktop
-description: 간단한 HTML/CSS/JS 페이지를 Tauri v2 데스크톱 앱(Windows .exe/.msi, macOS .app/.dmg, Linux .deb/.AppImage)으로 만든다. 빌드 환경(Rust, C++ 빌드 도구, WebView2, Node.js)이 없으면 먼저 설치한다. "HTML을 앱으로", "데스크톱 앱으로 만들어줘", "exe로 만들어줘", "Tauri로 패키징" 같은 요청에 사용한다.
+description: 간단한 HTML/CSS/JS 페이지를 Wails v2 Windows 데스크톱 앱(.exe, 선택적으로 NSIS 설치 파일)으로 만든다. 빌드 환경(Go, Wails CLI, WebView2)이 없으면 먼저 설치한다. "HTML을 앱으로", "데스크톱 앱으로 만들어줘", "exe로 만들어줘", "Wails로 패키징" 같은 요청에 사용한다. Windows에서 Windows용으로만 빌드한다.
 ---
 
-# HTML → 데스크톱 앱 (Tauri v2)
+# HTML → Windows 데스크톱 앱 (Wails v2)
 
-이 스킬의 스크립트는 이 SKILL.md와 같은 폴더의 `scripts/` 안에 있다. 아래 `<SKILL_DIR>`는 그 폴더의 절대 경로다.
+이 스킬의 스크립트는 이 SKILL.md와 같은 폴더의 `scripts/` 안에, 프로젝트 틀은 `template/` 안에 있다. 아래 `<SKILL_DIR>`는 그 폴더의 절대 경로다.
+
+Windows 전용이다. macOS/Linux 사용자에게는 지원하지 않는다고 알린다.
+모든 명령은 PowerShell(또는 Bash 도구에서 `powershell -File ...`)로 실행한다.
 
 ## 1. 입력 확인
 
 - HTML이 있는 폴더를 찾는다. 첫 화면은 `index.html`이어야 한다. 파일 하나뿐이면 새 폴더에 `index.html`로 복사한다.
-- 모든 HTML에 `<meta charset="utf-8">`이 있는지 확인하고 없으면 넣는다. 없으면 Windows 앱 창에서 한글이 깨진다.
-- 앱 이름을 정한다. 사용자가 말하지 않았으면 `<title>` 또는 폴더 이름을 쓴다.
+- 모든 HTML에 `<meta charset="utf-8">`이 있는지 확인하고 없으면 넣는다. 없으면 앱 창에서 한글이 깨진다.
+- 앱 이름을 정한다. 사용자가 말하지 않았으면 `<title>` 또는 폴더 이름을 쓴다. 이름이 한글이면 exe 파일 이름용 영문 이름(`-Slug`)도 정한다.
 - HTML이 외부 CDN을 쓰면 앱도 인터넷이 필요하다고 알린다. 오프라인이 필요하면 파일을 내려받아 상대 경로로 바꾼다.
 - 출력 폴더 기본값: HTML 폴더 옆의 `<앱이름>-desktop/`.
 
@@ -24,7 +27,7 @@ description: 간단한 HTML/CSS/JS 페이지를 Tauri v2 데스크톱 앱(Window
 - `impeccable`: `/impeccable critique`로 문제를 찾고 `/impeccable polish`로 다듬는다.
 
 웹페이지와 달리 데스크톱 앱 창에서 지킬 것:
-- 창 크기(기본 800×600)에 맞춘 레이아웃. 본문 전체 스크롤 대신 고정 헤더/사이드바 + 내용 영역만 스크롤.
+- 창 크기(기본 1024×768)에 맞춘 레이아웃. 본문 전체 스크롤 대신 고정 헤더/사이드바 + 내용 영역만 스크롤.
 - 폰트·아이콘·라이브러리는 `web/` 안에 로컬 파일로 둔다. 오프라인에서도 같은 모습이어야 한다.
 - `prefers-color-scheme`로 OS 다크 모드를 따른다.
 - 버튼·메뉴 같은 UI 텍스트는 `user-select: none`, 내용 텍스트는 선택 가능하게 둔다.
@@ -33,80 +36,101 @@ description: 간단한 HTML/CSS/JS 페이지를 Tauri v2 데스크톱 앱(Window
 
 ## 2. 빌드 환경 점검
 
-Windows:
 ```powershell
 powershell -ExecutionPolicy Bypass -File "<SKILL_DIR>/scripts/setup-windows.ps1"
-```
-macOS / Linux:
-```bash
-bash "<SKILL_DIR>/scripts/setup-unix.sh"
 ```
 
 마지막 줄이 `READY`면 3단계로 간다. `MISSING: ...`이면:
 
 1. 빠진 항목과 설치 내용을 사용자에게 알리고 **설치 동의를 받는다.** 시스템에 프로그램을 설치하는 작업이다.
-   - `msvc`: Visual Studio Build Tools의 "C++를 사용한 데스크톱 개발" (수 GB, 관리자 권한 창이 뜬다)
+   - `go`: Go 1.26 이상 (winget `GoLang.Go`, 약 300MB). Wails v2.17.1이 Go 1.26을 요구한다.
+   - `wails`: Wails CLI v2.17.1 (`go install`, 사용자 폴더 `%USERPROFILE%\go\bin`에 설치, 관리자 권한 불필요)
    - `webview2`: Microsoft Edge WebView2 런타임 (Windows 11은 보통 이미 있음)
-   - `rust`: rustup + stable 툴체인
-   - `node`: Node.js LTS
-   - `xcode-clt`: Xcode Command Line Tools (macOS, 설치 창에서 직접 눌러야 함)
-   - `system-libs`: webkit2gtk-4.1 등 (Linux, sudo 비밀번호 필요)
-2. 동의하면 같은 스크립트를 `-Install`(Windows) 또는 `--install`(macOS/Linux)로 실행한다. 설치는 오래 걸리므로 timeout을 최대(600000ms)로 주거나 백그라운드로 실행한다.
-3. sudo 비밀번호나 설치 창 클릭이 필요하면 사용자에게 `! <명령>`으로 직접 실행하도록 안내한다.
-4. 다시 점검한다. 설치 직후 PATH가 안 잡혀 `rust`/`node`가 계속 빠지면 새 터미널(또는 Claude Code 재시작)을 요청한다.
+   - `nsis`: `-Nsis`로 점검했을 때만 나온다. 설치 파일(setup.exe)을 만들 때만 필요.
+2. 동의하면 같은 스크립트를 `-Install`로 실행한다(설치 파일도 만들려면 `-Install -Nsis`). timeout을 최대(600000ms)로 준다.
+3. 다시 점검한다. 설치 직후 PATH가 안 잡혀 `go`/`wails`가 계속 빠지면 새 터미널(또는 Claude Code 재시작)을 요청한다.
 
-## 3. Tauri 프로젝트 생성
+Rust, Visual Studio C++ 빌드 도구, Node.js는 필요 없다. `wails doctor`가 Node/npm을 보여줘도 이 스킬에서는 쓰지 않는다.
 
-```bash
-node "<SKILL_DIR>/scripts/scaffold.mjs" --src "<HTML폴더>" --out "<출력폴더>" --name "<앱이름>" [--title "<창제목>"] [--id com.회사.앱] [--mcp-bridge]
+## 3. Wails 프로젝트 생성
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "<SKILL_DIR>/scripts/scaffold.ps1" -Src "<HTML폴더>" -Out "<출력폴더>" -Name "<앱이름>" [-Slug <영문이름>] [-Title "<창제목>"] [-Width 1024] [-Height 768]
 ```
 
-`--mcp-bridge`: 실제 앱 창 화면을 검수하려면 붙인다(1-1단계를 했으면 기본으로 붙인다). 디버그 빌드에만 `tauri-plugin-mcp-bridge`를 등록하고 `127.0.0.1`에만 연다. 배포 빌드(`npm run build`)의 동작에는 들어가지 않는다.
+`-Slug`는 exe 파일 이름, Go 모듈 이름, 데이터 폴더(`%APPDATA%\<slug>`) 이름이다. 생략하면 `-Name`에서 영문·숫자만 뽑고, 그것도 비면(한글 이름) `app-<숫자>`가 된다.
 
 결과 구조:
 ```
 <출력폴더>/
-  web/                 ← HTML 복사본. 이후 수정은 여기서 한다
-  src-tauri/           ← Rust 셸, tauri.conf.json, icons/
-  package.json
+  web/          ← HTML 복사본. exe 안에 그대로 들어간다(Go embed). 이후 수정은 여기서 한다
+  main.go       ← 창 제목·크기 등 옵션 (wails.Run)
+  app.go        ← HTML에서 부를 수 있는 Go 메서드 (App 구조체)
+  app_test.go   ← app.go 테스트 (go test ./...)
+  wails.json    ← frontend:install/build 가 비어 있어 npm 단계를 건너뛴다
+  go.mod, go.sum
 ```
 
-선택 조정 (`src-tauri/tauri.conf.json`):
-- 창 크기: `app.windows[0].width` / `height`
-- 아이콘: 사용자가 PNG(정사각형, 1024px 권장)를 주면 출력 폴더에서 `npx tauri icon <png경로>`
-- 번들 종류 제한(빌드 시간 단축): `bundle.targets`를 `["nsis"]`(Windows), `["dmg"]`(macOS), `["deb","appimage"]`(Linux) 등으로
+### HTML에서 Go 부르기
 
-## 4. 실행 확인 → 빌드
+`App`의 공개 메서드는 `window.go.main.App.<메서드>()`로 부르고 Promise를 돌려받는다. Wails 런타임 스크립트는 빌드된 앱이 `index.html`에 자동으로 넣는다. 예제로 들어 있는 메서드:
+
+```js
+await window.go.main.App.SaveText('메모.txt', '내용');   // %APPDATA%\<slug>\메모.txt 에 저장
+const text = await window.go.main.App.LoadText('메모.txt'); // 없으면 ''
+const dir = await window.go.main.App.DataDir();
+```
+
+파일 이름만 받고 경로(`..`, `\`, `/`)는 거부한다. HTML 쪽 스크립트가 데이터 폴더 밖을 건드리지 못하게 하려는 것이다.
+
+메서드를 추가하려면 `app.go`에 아래 형태로 쓰고 다시 빌드한다. `error`를 돌려주면 JS 쪽 Promise가 reject된다. 인자·반환값은 JSON으로 바뀌는 타입(문자열, 숫자, bool, 구조체, 슬라이스, 맵)만 쓴다.
+```go
+func (a *App) Add(x, y int) (int, error) { return x + y, nil }
+```
+빌드하면 `web/wailsjs/go/main/App.js`에 import용 래퍼도 생긴다(`import { Add } from './wailsjs/go/main/App.js'`). 전역 `window.go...`만 써도 된다.
+파일 선택 창·메시지 박스 등은 Wails 런타임(`github.com/wailsapp/wails/v2/pkg/runtime`)의 `runtime.OpenFileDialog(a.ctx, ...)` 등을 메서드 안에서 쓴다.
+
+선택 조정:
+- 창 크기·최소 크기: `main.go`의 `Width`/`Height`/`MinWidth`/`MinHeight`
+- 아이콘: 사용자가 PNG(정사각형, 1024px 권장)를 주면 `build/appicon.png`에 덮어쓰고 `build/windows/icon.ico`를 지운 뒤 다시 빌드한다. 첫 빌드 전이면 `build/` 폴더를 만들고 `appicon.png`만 넣는다.
+- 버전·제품 이름: `wails.json`의 `info.productVersion` / `info.productName`
+
+## 4. 빌드 → 화면 확인
 
 출력 폴더에서:
-```bash
-npm run dev     # 창이 뜨는지 확인. 첫 실행은 Rust 컴파일로 수 분 걸린다. 확인 후 종료
-npm run build   # 배포용 빌드
+```powershell
+go test ./...     # app.go 를 고쳤으면
+wails build       # build/bin/<slug>.exe (설치 없이 실행되는 단일 exe)
 ```
-Windows에서는 반드시 PowerShell(또는 cmd)로 실행한다. Git Bash는 `/usr/bin/link`가 MSVC `link.exe`를 가려 `link: extra operand` 오류가 난다.
-`npm run dev`는 창을 닫을 때까지 끝나지 않으므로 백그라운드로 실행하고, 확인 후 종료한다.
 
-`--mcp-bridge`로 만들었으면 이 플러그인의 `tauri` MCP 서버로 직접 확인한다:
-1. `driver_session`으로 세션을 시작한다(포트 9223).
-2. `webview_screenshot`으로 실제 창을 찍어 본다. `read_logs`로 콘솔 오류를 확인한다.
-3. 디자인 문제가 보이면 `web/`을 고친다. `/impeccable audit`도 돌린다. dev 서버는 파일 변경 시 다시 불러온다.
-4. 끝나면 세션을 멈춘다.
+화면 확인(추가 설치 없음. Windows 기본 .NET으로 앱 창을 PNG로 찍는다):
+```powershell
+powershell -ExecutionPolicy Bypass -File "<SKILL_DIR>/scripts/screenshot.ps1" -Exe "<출력폴더>/build/bin/<slug>.exe" -Png "<저장경로>.png"
+```
+1. 찍은 PNG를 Read 도구로 본다. 한글이 깨지지 않았는지, 레이아웃이 창 크기에 맞는지 확인한다.
+2. 디자인 문제가 보이면 `web/`을 고치고 다시 빌드해 찍는다. `/impeccable audit`도 돌린다.
+3. JS 오류가 의심되면 `wails build -devtools`로 빌드한다. 앱 창에서 Ctrl+Shift+F12를 누르면 개발자 도구(콘솔·요소 검사)가 열린다. 이 키는 사용자가 직접 눌러야 하므로 필요하면 요청한다. 배포용은 `-devtools` 없이 다시 빌드한다.
 
-브리지가 없으면 사용자에게 창 확인을 요청한다.
+개발 중 빠르게 보려면 `wails dev`(파일 변경 시 다시 불러옴)를 백그라운드로 실행할 수 있다. 창을 닫을 때까지 끝나지 않으므로 확인 후 종료한다.
 
-빌드 결과 위치: `src-tauri/target/release/bundle/`
-- Windows: `nsis/*-setup.exe`, `msi/*.msi` / 설치 없이 쓰는 exe: `src-tauri/target/release/<이름>.exe`
-- macOS: `macos/*.app`, `dmg/*.dmg`
-- Linux: `deb/*.deb`, `appimage/*.AppImage`
+### (선택) 설치 파일
 
-결과 파일 경로를 사용자에게 알려준다. 다른 OS용 파일은 그 OS에서 빌드해야 한다고 알린다(크로스 빌드 미지원).
+사용자가 설치 파일을 원하면 2단계를 `-Nsis`로 점검·설치한 뒤:
+```powershell
+wails build -nsis   # build/bin/<slug>-amd64-installer.exe
+```
+설치 파일은 시작 메뉴·바탕화면 바로가기를 만들고, WebView2가 없는 PC에서는 설치 중에 내려받는다.
+
+결과 파일 경로를 사용자에게 알려준다. 단일 exe는 WebView2가 있는 Windows 10/11에서 그대로 실행된다.
 
 ## 문제 해결
 
-- `link.exe not found` / `MSVC` 오류 / `LNK1181 kernel32.lib`: C++ 빌드 도구 또는 Windows SDK 미설치. 2단계로 돌아간다.
-- `link: extra operand`: Git Bash에서 빌드했다. PowerShell에서 다시 실행한다.
-- `identifier ... com.tauri.dev`: `tauri.conf.json`의 `identifier`를 고유값으로 바꾼다.
-- MSI(WiX) `LGHT0311 ... code page '1252'`: 비ASCII 앱 이름. scaffold는 한글 이름이면 `bundle.windows.wix.language`를 `"ko-KR"`로 넣는다. 다른 언어면 해당 로케일(예: `"ja-JP"`)로 바꾸거나 `bundle.targets`를 `["nsis"]`로 줄인다.
-- WiX/NSIS 다운로드 실패: 네트워크·프록시 문제. 재시도하거나 `bundle.targets`를 줄인다.
-- `fetch`/로컬 파일 접근이 안 됨: 앱은 `tauri://` 출처에서 열린다. 상대 경로 리소스는 `web/` 안에 있어야 한다.
-- macOS에서 "확인되지 않은 개발자": 서명 안 된 앱이라 정상. 우클릭 → 열기로 실행한다.
+- `wails: command not found` / `'wails'은(는) ... 아닙니다`: `%USERPROFILE%\go\bin`이 PATH에 없다. 새 터미널을 열거나 전체 경로로 실행한다.
+- `go: go.mod requires go >= 1.26.0`: Go가 낮다. 2단계를 `-Install`로 다시 실행한다(winget upgrade).
+- `go mod tidy` / 빌드 중 모듈 다운로드 실패: 네트워크·프록시 문제. `go env -w GOPROXY=...`로 사내 프록시를 지정하거나 재시도한다.
+- 한글이 `ì•ˆë…•`처럼 깨짐: HTML에 `<meta charset="utf-8">`이 없거나 파일이 UTF-8이 아니다.
+- `window.go is undefined`: 브라우저로 `web/index.html`을 직접 열었다. Go 호출은 빌드된 앱(또는 `wails dev`) 안에서만 된다.
+- `Error: ... wails.json` 파싱 오류: BOM 있는 UTF-8로 저장됐다. BOM 없는 UTF-8로 다시 저장한다.
+- 앱이 바로 꺼짐 / 빈 창: WebView2 런타임 미설치. 2단계로 돌아간다.
+- `makensis` 없음(`-nsis`): NSIS 미설치. `setup-windows.ps1 -Install -Nsis`.
+- 백신이 새 exe를 막음: 서명 안 된 exe라 생길 수 있다. 코드 서명은 이 스킬 범위 밖이다.

@@ -6,7 +6,7 @@
     {
       "name": "desktop-app-factory",
       "source": "./",
-      "description": "HTML 페이지를 Tauri 데스크톱 앱으로 빌드하고, 필요한 빌드 환경을 자동으로 갖춘다."
+      "description": "HTML 페이지를 Wails Windows 데스크톱 앱으로 빌드하고, 필요한 빌드 환경을 자동으로 갖춘다."
     },
     {
       "name": "frontend-design",
