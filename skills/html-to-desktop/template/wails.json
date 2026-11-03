@@ -1,0 +1,12 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "{{SLUG}}",
+  "outputfilename": "{{SLUG}}",
+  "frontend:dir": "web",
+  "frontend:install": "",
+  "frontend:build": "",
+  "info": {
+    "productName": "{{NAME}}",
+    "productVersion": "1.0.0"
+  }
+}
