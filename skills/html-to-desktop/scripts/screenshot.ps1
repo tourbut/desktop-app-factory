@@ -8,6 +8,7 @@ param(
   [switch]$Keep
 )
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [Text.Encoding]::UTF8 # 없으면 Bash 등 다른 셸을 거칠 때 한글 출력이 깨진다
 Add-Type -AssemblyName System.Drawing
 Add-Type @'
 using System;

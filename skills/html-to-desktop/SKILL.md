@@ -54,6 +54,11 @@ Rust, Visual Studio C++ 빌드 도구, Node.js는 필요 없다. `wails doctor`�
 - `frontend-design`: 템플릿 티가 나지 않게 미적 방향을 정한다.
 - `impeccable`: `/impeccable critique`로 문제를 찾고 `/impeccable polish`로 다듬는다.
 
+이 스킬들은 웹사이트 기준이라 데스크톱 앱에 맞지 않는 추천도 낸다. 그대로 따르지 말고 걸러낸다:
+- Google Fonts 등 CDN 웹폰트 추천은 쓰지 않는다. 오프라인에서 안 보이고, 추천 폰트 대부분이 한글 글리프가 없다. Windows 기본 폰트(`"Segoe UI Variable Text", "Segoe UI", "Malgun Gothic", sans-serif`)를 쓰거나, 폰트 파일을 `web/` 안에 넣고 `@font-face`로 연결한다.
+- 히어로·기능 소개·CTA 같은 랜딩 페이지 구성 추천은 무시한다. 앱은 첫 화면이 바로 작업 화면이다.
+- 375px·1440px 같은 반응형 기준 대신 창 크기(`-Width`/`-Height`)와 `main.go`의 최소 크기(400×300)에서 확인한다.
+
 웹페이지와 달리 데스크톱 앱 창에서 지킬 것:
 - 창 크기(기본 1024×768)에 맞춘 레이아웃. 본문 전체 스크롤 대신 고정 헤더/사이드바 + 내용 영역만 스크롤.
 - 폰트·아이콘·라이브러리는 `web/` 안에 로컬 파일로 둔다. 오프라인에서도 같은 모습이어야 한다.

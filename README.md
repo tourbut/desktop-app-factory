@@ -21,6 +21,14 @@
 
 만들어진 프로젝트는 HTML 폴더(`web/`)를 Go `embed`로 exe 안에 넣는다. npm 빌드 단계는 없다. `app.go`의 `App` 구조체 메서드를 HTML에서 `window.go.main.App.<메서드>()`로 불러 Go 코드(예: 로컬 파일 읽기/쓰기)를 쓸 수 있다. 메서드 추가 방법은 `skills/html-to-desktop/SKILL.md` 3단계에 있다.
 
+### 예제
+
+`examples/memo/`는 꾸밈 없는 할 일 목록 HTML이다(`SaveText`/`LoadText`로 저장). `examples/memo-designed/`는 같은 페이지에 디자인 다듬기 단계를 적용한 결과다.
+
+| 패키징만 | 디자인 다듬기 후 |
+|---|---|
+| ![패키징만](examples/screenshots/memo-before.png) | ![디자인 후](examples/screenshots/memo-after.png) |
+
 ## 함께 설치되는 것
 
 `desktop-app-factory`를 설치하면 아래 디자인 플러그인이 의존성으로 함께 설치된다. 모두 이 마켓플레이스에 원본 GitHub 저장소를 가리키는 항목으로 등록돼 있다.
