@@ -4,6 +4,7 @@
 # -Nsis 를 주면 NSIS 도 필수로 보고 (-Install 과 함께면) 설치한다.
 param([switch]$Install, [switch]$Nsis)
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [Text.Encoding]::UTF8 # 없으면 Bash 등 다른 셸을 거칠 때 한글 출력이 깨진다
 $ProgressPreference = 'SilentlyContinue' # PowerShell 5.1 의 진행 표시줄은 다운로드를 크게 느리게 한다
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $WailsVersion = 'v2.17.1'

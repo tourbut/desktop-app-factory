@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>오늘 할 일</title>
+</head>
+<body>
+<h1>오늘 할 일</h1>
+<form id="add">
+  <input id="text" placeholder="할 일을 입력하세요" required>
+  <button>추가</button>
+</form>
+<ul id="list"></ul>
+<p id="status"></p>
+<script>
+  // 빌드된 앱에서는 %APPDATA%\<앱>\todos.json 에 저장, 브라우저로 열면 메모리에만 둔다.
+  const api = window.go?.main?.App;
+  let todos = [];
+
+  function render() {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    todos.forEach((t, i) => {
+      const li = document.createElement('li');
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = t.done;
+      box.onchange = () => { t.done = box.checked; save(); };
+      const label = document.createElement('span');
+      label.textContent = ' ' + t.text + ' ';
+      const del = document.createElement('button');
+      del.textContent = '삭제';
+      del.onclick = () => { todos.splice(i, 1); save(); };
+      li.append(box, label, del);
+      list.append(li);
+    });
+    document.getElementById('status').textContent =
+      `${todos.filter(t => t.done).length} / ${todos.length} 완료`;
+  }
+
+  async function save() {
+    render();
+    if (api) await api.SaveText('todos.json', JSON.stringify(todos));
+  }
+
+  document.getElementById('add').onsubmit = (e) => {
+    e.preventDefault();
+    const input = document.getElementById('text');
+    todos.push({ text: input.value, done: false });
+    input.value = '';
+    save();
+  };
+
+  (async () => {
+    if (api) todos = JSON.parse((await api.LoadText('todos.json')) || '[]');
+    render();
+  })();
+</script>
+</body>
+</html>

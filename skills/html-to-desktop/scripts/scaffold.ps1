@@ -10,6 +10,7 @@ param(
   [int]$Height = 768
 )
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [Text.Encoding]::UTF8 # 없으면 Bash 등 다른 셸을 거칠 때 한글 출력이 깨진다
 $utf8 = New-Object System.Text.UTF8Encoding($false) # BOM 이 있으면 wails.json 파싱이 실패한다
 
 $Src = (Resolve-Path $Src).Path
